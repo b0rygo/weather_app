@@ -1,4 +1,3 @@
-// ajax_script.js
 $(document).ready(function () {
     $('#get-sunrise').click(function () {
         var city = $('#city').val();
@@ -12,15 +11,22 @@ $(document).ready(function () {
                     'city': city,
                 },
                 success: function (response) {
-                    if (response.time) {
-                        // Wyświetlamy miasto oraz godzinę wschodu słońca
-                        $('#sunrise-time-container').html('Miasto: ' + response.city + '<br>Godzina wschodu słońca: ' + response.time);
+                    if (response.sunrise) {
+                        // Wyświetlamy miasto oraz dane pogodowe
+                        $('#sunrise-time-container').html(
+                            'Miasto: ' + response.city + '<br>' +
+                            'Godzina wschodu słońca: ' + response.sunrise + '<br>' +
+                            'Godzina zachodu słońca: ' + (response.sunset || 'Brak danych') + '<br>' +
+                            'Temperatura: ' + (response.temperature + '°C' || 'Brak danych') + '<br>' +
+                            'Opady deszczu: ' + (response.precipitation + '°C'|| 'Brak danych') + '<br>' +
+                            'Wiatr: ' + (response.wind || 'Brak danych')
+                        );
                     } else {
                         $('#sunrise-time-container').html(response.error);
                     }
                 },
                 error: function () {
-                    $('#sunrise-time-container').html('Wystąpił błąd podczas próby pobrania godziny.');
+                    $('#sunrise-time-container').html('Wystąpił błąd podczas próby pobrania danych pogodowych.');
                 }
             });
         } else {

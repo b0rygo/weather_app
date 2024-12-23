@@ -26,21 +26,33 @@ def scrape_data(city):
         if response.status_code == 200:
             tree = html.fromstring(response.content)
 
-            # XPath, aby znaleźć godzinę wschodu słońca
-            sun_element = tree.xpath('//*[@id="basicastro"]/text()')
-            sun_element1 = tree.xpath('//*[@id="basicastro"]/text()[2]')
+            # XPath dla odpowiednich elementów
+            sunrise_element = tree.xpath('//*[@id="basicastro"]/text()')
+            sunset_element = tree.xpath('//*[@id="basicastro"]/text()[2]')
+            temperature_element = tree.xpath('//*[@id="svgforecast"]/svg/text[3]')
+            precipitation_element = tree.xpath('//*[@id="svgforecast"]/svg/text[7]')
+            wind_element = tree.xpath('//*[@id="svgforecast"]/svg/text[9]')
 
-            if sun_element:
-                data = sun_element[0].strip()
-                data1 = sun_element1[0].strip()
-                # Wyciągamy godzinę
-                time = data[-5:]
-                time1 = data1[-5:]
-                return time + time1
-            return None
+            print(temperature_element)
+            # Pobieranie i przetwarzanie danych
+            sunrise = sunrise_element[0].strip()[-5:] if sunrise_element and isinstance(sunrise_element[0],str) else None
+            sunset = sunset_element[0].strip()[-5:] if sunset_element and isinstance(sunset_element[0], str) else None
+            temperature = temperature_element[0].text.strip() if temperature_element and hasattr(temperature_element[0], 'text') else None
+            precipitation = precipitation_element[0].text.strip() if precipitation_element and hasattr(precipitation_element[0], 'text') else None
+            wind = wind_element[0].text.strip() if wind_element and hasattr(wind_element[0], 'text') else None
+
+            # Zwracamy wszystkie dane
+            return {
+                "sunrise": sunrise,
+                "sunset": sunset,
+                "temperature": temperature,
+                "precipitation": precipitation,
+                "wind": wind,
+                "city": city.capitalize()
+            }
         else:
             return None
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
         return None
 
 
@@ -48,11 +60,11 @@ def index(request):
     if request.method == 'GET' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         city = request.GET.get('city')
         if city:
-            sunrise_time = scrape_data(city)
-            if sunrise_time:
-                return JsonResponse({'time': sunrise_time, 'city': city})
+            weather_data = scrape_data(city)
+            if weather_data:
+                return JsonResponse(weather_data)
             else:
-                return JsonResponse({'error': 'Nie udało się pobrać godziny wschodu słońca.'})
+                return JsonResponse({'error': 'Nie udało się pobrać danych pogodowych.'})
         else:
             return JsonResponse({'error': 'Miasto nie zostało podane.'})
 
